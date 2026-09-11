@@ -7,7 +7,7 @@ def get_gemini_model(temperature: float = 0.4):
     Centralizing this means every LangGraph node uses the same setup.
     """
     return ChatGoogleGenerativeAI(
-        model="gemini-1.5-flash",
+        model="gemini-3.6-flash",
         google_api_key=settings.GOOGLE_API_KEY,
         temperature=temperature,
     )

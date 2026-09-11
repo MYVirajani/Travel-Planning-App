@@ -24,4 +24,10 @@ def health_check():
 @app.post("/test-agent")
 def test_agent(payload: dict):
     result = trip_agent.invoke({"user_message": payload["message"]})
-    return {"itinerary": result["itinerary"]}
+    return {
+        "destination": result.get("destination"),
+        "start_date": result.get("start_date"),
+        "end_date": result.get("end_date"),
+        "budget": result.get("budget"),
+        "interests": result.get("interests"),
+    }

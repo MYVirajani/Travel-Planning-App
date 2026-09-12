@@ -13,4 +13,6 @@ class TripState(TypedDict, total=False):
     interests: List[str]
     search_results: List[dict]
     itinerary: Optional[str]
-    messages: List[dict]       
+    messages: List[dict] 
+    previous_itinerary: Optional[str]   
+    is_refinement: bool                

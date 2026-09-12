@@ -1,8 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.config import settings
-from app.agent.graph import trip_agent
-
+from app.routes.agent import router as agent_router
 
 app = FastAPI(title="Travel Planning Agent API")
 
@@ -21,14 +20,4 @@ def startup_event():
 def health_check():
     return {"status": "ok"}
 
-@app.post("/test-agent")
-def test_agent(payload: dict):
-    result = trip_agent.invoke({"user_message": payload["message"]})
-    return {
-        "destination": result.get("destination"),
-        "start_date": result.get("start_date"),
-        "end_date": result.get("end_date"),
-        "budget": result.get("budget"),
-        "interests": result.get("interests"),
-        "itinerary": result.get("itinerary"),
-    }
+app.include_router(agent_router)

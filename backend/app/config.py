@@ -11,6 +11,8 @@ class Settings:
         missing = []
         if not self.GOOGLE_API_KEY:
             missing.append("GOOGLE_API_KEY")
+        if not self.TAVILY_API_KEY:
+            missing.append("TAVILY_API_KEY")
         if missing:
             raise ValueError(f"Missing required env vars: {', '.join(missing)}")
 

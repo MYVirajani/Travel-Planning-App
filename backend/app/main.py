@@ -30,4 +30,5 @@ def test_agent(payload: dict):
         "end_date": result.get("end_date"),
         "budget": result.get("budget"),
         "interests": result.get("interests"),
+        "search_results": result.get("search_results"),
     }

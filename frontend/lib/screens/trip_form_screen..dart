@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../models/trip_request.dart';
+import '../services/api_service.dart';
 import '../widgets/interest_chip_selector.dart';
 
 class TripFormScreen extends StatefulWidget {
@@ -17,6 +18,8 @@ class _TripFormScreenState extends State<TripFormScreen> {
   DateTime? _startDate;
   DateTime? _endDate;
   final Set<String> _selectedInterests = {};
+  final _apiService = ApiService();
+  bool _isSubmitting = false;
 
   Future<void> _pickDateRange() async {
     final now = DateTime.now();
@@ -42,7 +45,7 @@ class _TripFormScreenState extends State<TripFormScreen> {
     return '${fmt(_startDate!)} - ${fmt(_endDate!)}';
   }
 
-  void _handleSubmit() {
+  void _handleSubmit() async {
     if (!_formKey.currentState!.validate()) return;
     if (_startDate == null || _endDate == null) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -59,8 +62,22 @@ class _TripFormScreenState extends State<TripFormScreen> {
       interests: _selectedInterests.toList(),
     );
 
-   
-    debugPrint('TripRequest message: ${request.toMessage()}');
+    setState(() => _isSubmitting = true);
+
+    try {
+      await for (final event in _apiService.planTrip(message: request.toMessage())) {
+        debugPrint('SSE event: ${event.type} -> ${event.data}');
+        
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Something went wrong: $e')),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isSubmitting = false);
+    }
   }
 
   @override
@@ -126,11 +143,16 @@ class _TripFormScreenState extends State<TripFormScreen> {
             ),
             const SizedBox(height: 32),
             FilledButton.icon(
-              onPressed: _handleSubmit,
-              icon: const Icon(Icons.explore_outlined),
-              label: const Padding(
-                padding: EdgeInsets.symmetric(vertical: 12),
-                child: Text('Plan My Trip'),
+              onPressed: _isSubmitting ? null : _handleSubmit,
+              icon: _isSubmitting
+                  ? const SizedBox(
+                width: 16, height: 16,
+                child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+              )
+                  : const Icon(Icons.explore_outlined),
+              label: Padding(
+                padding: const EdgeInsets.symmetric(vertical: 12),
+                child: Text(_isSubmitting ? 'Planning...' : 'Plan My Trip'),
               ),
             ),
           ],

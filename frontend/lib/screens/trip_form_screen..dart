@@ -1,16 +1,18 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/trip_request.dart';
-import '../services/api_service.dart';
+import '../models/trip_plan_state.dart';
+import '../providers/trip_planner_provider.dart';
 import '../widgets/interest_chip_selector.dart';
 
-class TripFormScreen extends StatefulWidget {
+class TripFormScreen extends ConsumerStatefulWidget {
   const TripFormScreen({super.key});
 
   @override
-  State<TripFormScreen> createState() => _TripFormScreenState();
+  ConsumerState<TripFormScreen> createState() => _TripFormScreenState();
 }
 
-class _TripFormScreenState extends State<TripFormScreen> {
+class _TripFormScreenState extends ConsumerState<TripFormScreen> {
   final _formKey = GlobalKey<FormState>();
   final _destinationController = TextEditingController();
   final _budgetController = TextEditingController();
@@ -18,8 +20,6 @@ class _TripFormScreenState extends State<TripFormScreen> {
   DateTime? _startDate;
   DateTime? _endDate;
   final Set<String> _selectedInterests = {};
-  final _apiService = ApiService();
-  bool _isSubmitting = false;
 
   Future<void> _pickDateRange() async {
     final now = DateTime.now();
@@ -27,9 +27,6 @@ class _TripFormScreenState extends State<TripFormScreen> {
       context: context,
       firstDate: now,
       lastDate: now.add(const Duration(days: 365)),
-      initialDateRange: _startDate != null && _endDate != null
-          ? DateTimeRange(start: _startDate!, end: _endDate!)
-          : null,
     );
     if (range != null) {
       setState(() {
@@ -45,7 +42,7 @@ class _TripFormScreenState extends State<TripFormScreen> {
     return '${fmt(_startDate!)} - ${fmt(_endDate!)}';
   }
 
-  void _handleSubmit() async {
+  void _handleSubmit() {
     if (!_formKey.currentState!.validate()) return;
     if (_startDate == null || _endDate == null) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -62,26 +59,22 @@ class _TripFormScreenState extends State<TripFormScreen> {
       interests: _selectedInterests.toList(),
     );
 
-    setState(() => _isSubmitting = true);
-
-    try {
-      await for (final event in _apiService.planTrip(message: request.toMessage())) {
-        debugPrint('SSE event: ${event.type} -> ${event.data}');
-        
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Something went wrong: $e')),
-        );
-      }
-    } finally {
-      if (mounted) setState(() => _isSubmitting = false);
-    }
+    ref.read(tripPlannerProvider.notifier).planTrip(request.toMessage());
   }
 
   @override
   Widget build(BuildContext context) {
+    final planState = ref.watch(tripPlannerProvider);
+    final isSubmitting = planState.status == TripPlanStatus.loading;
+
+    ref.listen(tripPlannerProvider, (previous, next) {
+      if (next.status == TripPlanStatus.error && next.errorMessage != null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Something went wrong: ${next.errorMessage}')),
+        );
+      }
+    });
+
     return Scaffold(
       appBar: AppBar(title: const Text('Plan Your Trip')),
       body: Form(
@@ -143,8 +136,8 @@ class _TripFormScreenState extends State<TripFormScreen> {
             ),
             const SizedBox(height: 32),
             FilledButton.icon(
-              onPressed: _isSubmitting ? null : _handleSubmit,
-              icon: _isSubmitting
+              onPressed: isSubmitting ? null : _handleSubmit,
+              icon: isSubmitting
                   ? const SizedBox(
                 width: 16, height: 16,
                 child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
@@ -152,7 +145,9 @@ class _TripFormScreenState extends State<TripFormScreen> {
                   : const Icon(Icons.explore_outlined),
               label: Padding(
                 padding: const EdgeInsets.symmetric(vertical: 12),
-                child: Text(_isSubmitting ? 'Planning...' : 'Plan My Trip'),
+                child: Text(isSubmitting
+                    ? (planState.currentStepLabel ?? 'Planning...')
+                    : 'Plan My Trip'),
               ),
             ),
           ],

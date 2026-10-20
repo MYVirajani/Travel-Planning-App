@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'screens/home_screen.dart';
 
 void main() {
-  runApp(const TravelPlannerApp());
+  runApp(const ProviderScope(child: TravelPlannerApp()));
 }
 
 class TravelPlannerApp extends StatelessWidget {
@@ -11,7 +12,6 @@ class TravelPlannerApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      debugShowCheckedModeBanner: false,
       title: 'Travel Planner',
       theme: ThemeData(
         colorSchemeSeed: Colors.teal,

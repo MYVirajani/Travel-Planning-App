@@ -4,6 +4,7 @@ import '../models/trip_request.dart';
 import '../models/trip_plan_state.dart';
 import '../providers/trip_planner_provider.dart';
 import '../widgets/interest_chip_selector.dart';
+import 'loading_screen.dart';
 
 class TripFormScreen extends ConsumerStatefulWidget {
   const TripFormScreen({super.key});
@@ -60,6 +61,11 @@ class _TripFormScreenState extends ConsumerState<TripFormScreen> {
     );
 
     ref.read(tripPlannerProvider.notifier).planTrip(request.toMessage());
+
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => const LoadingScreen()),
+    );
   }
 
   @override
@@ -136,18 +142,11 @@ class _TripFormScreenState extends ConsumerState<TripFormScreen> {
             ),
             const SizedBox(height: 32),
             FilledButton.icon(
-              onPressed: isSubmitting ? null : _handleSubmit,
-              icon: isSubmitting
-                  ? const SizedBox(
-                width: 16, height: 16,
-                child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
-              )
-                  : const Icon(Icons.explore_outlined),
-              label: Padding(
-                padding: const EdgeInsets.symmetric(vertical: 12),
-                child: Text(isSubmitting
-                    ? (planState.currentStepLabel ?? 'Planning...')
-                    : 'Plan My Trip'),
+              onPressed: _handleSubmit,
+              icon: const Icon(Icons.explore_outlined),
+              label: const Padding(
+                padding: EdgeInsets.symmetric(vertical: 12),
+                child: Text('Plan My Trip'),
               ),
             ),
           ],

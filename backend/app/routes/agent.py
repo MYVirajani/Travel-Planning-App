@@ -48,16 +48,16 @@ async def stream_trip_plan(user_message: str, previous_itinerary: str | None = N
     except Exception as e:
         yield _sse_event("error", {"message": str(e)})
 
-@router.post("/plan-trip")
-async def plan_trip(payload: dict):
-    user_message = payload.get("message", "")
-    previous_itinerary = payload.get("previous_itinerary")
-    return StreamingResponse(
-        stream_trip_plan(user_message, previous_itinerary),
-        media_type="text/event-stream",
-        headers={
-            "Cache-Control": "no-cache",
-            "Connection": "keep-alive",
-            "X-Accel-Buffering": "no",
-        },
-    )
+    @router.post("/plan-trip")
+    async def plan_trip(payload: dict):
+        user_message = payload.get("message", "")
+        previous_itinerary = payload.get("previous_itinerary")  
+        return StreamingResponse(
+            stream_trip_plan(user_message, previous_itinerary),
+            media_type="text/event-stream",
+            headers={
+                "Cache-Control": "no-cache",
+                "Connection": "keep-alive",
+                "X-Accel-Buffering": "no",
+            },
+        )
